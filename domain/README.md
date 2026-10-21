@@ -60,6 +60,14 @@ domain/src/
 │   │   ├── WallpaperDrawing.kt  model and rule: what a wallpaper is drawn from (a picture, its style, the screen's size), and why the one kept won't do (DrawingCause)
 │   │   ├── StoredWallpaper.kt   port: the one wallpaper kept, drawn at the screen's size, so a start shows it at once
 │   │   └── Wallpaper.kt         helper: the wallpaper as it stands (none, ready, or being drawn and why), one per process, which a screen watches; saving a background (drawn, kept, then stored), and forgetting a deleted picture; the image ready, for a preview of its background
+│   ├── slideshow/               this fork's wallpaper slideshow
+│   │   ├── SlideshowSource.kt   model: the background's source (its picture, or a site) and interval
+│   │   ├── Slides.kt            port: the slide shown in place of the background's picture, and when it changes
+│   │   ├── Slideshow.kt         helper: the slideshow, one per process, changing slides and fetching while watched
+│   │   ├── SlideshowLibrary.kt  port and models: which pictures each source gave, the one shown, when fetched
+│   │   ├── WebPictures.kt       port and rules: the internet's listings and pictures (Download), a picture that fits a slideshow, its name
+│   │   ├── WebSources.kt        rules: each site's listing, and the pictures it names, read from its JSON or RSS
+│   │   └── Json.kt              a JSON text read into Kotlin values, for the listings
 │   ├── clock/
 │   │   ├── ClockReading.kt      model: the time, time zone and hour format at one moment
 │   │   └── Clock.kt             port: the device's clock, and when what it shows changes

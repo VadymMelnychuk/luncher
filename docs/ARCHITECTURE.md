@@ -142,7 +142,9 @@ work is kept from coming back, and how a wait shows.
    answers or its process dies. `OutsideCalls` there is the only place that starts such a thread,
    and bounds how many are alive; nothing else starts a thread, as Luncher's own slow work is a
    job. Android's own services (PackageManager, LauncherApps) aren't another app: Android answers
-   them. Tests give `outside/` a clock and a wait for data of their own, so the time another app
+   them. A server on the internet is waited on alike (this fork's slideshow, `HttpWebPictures`):
+   each download on a thread of `OutsideCalls.start`, which nothing waits for and which ends by
+   itself within its time limits, its result posted to the main thread. Tests give `outside/` a clock and a wait for data of their own, so the time another app
    takes passes when the test says.
 7. **Heavy work is done once, and kept with what it depends on.** Work that costs more than a
    frame (decoding a picture) is done once per input. Its result is kept by the adapter that made
@@ -241,6 +243,11 @@ changed in the settings' appearance editor
 ([`feature/settings/README.md`](../feature/settings/README.md#appearance)); the wallpaper's fit,
 position, dim and blur in the background editor it opens (below). The wallpaper's picture
 isn't an option, since its values are the library's pictures, not a list known in `:domain`.
+This fork's slideshow adds two values to `Background` that aren't options either, each with a key
+of its own: its source (the picture, or a site; which sites there are depends on the build) and
+its interval, which changes no drawing. The slide shown is `Slideshow`'s (`:domain`'s
+`slideshow/`), not a setting: `Wallpaper` draws it in place of the picture
+([`feature/home/README.md`](../feature/home/README.md#the-wallpaper)).
 
 **The one exception to storing each change at once: the background.** Its group is edited apart
 (`editedApart`), in the background editor

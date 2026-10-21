@@ -43,6 +43,10 @@ platform/
     │   │   │   └── WholeFiles.kt                    whether a JPEG, PNG or WebP is whole, by its structure, before it's decoded
     │   │   ├── jobs/
     │   │   │   └── BackgroundThreadJobs.kt          Jobs on one thread at background priority, with a priority queue
+    │   │   ├── network/                             this fork's slideshow only (below)
+    │   │   │   └── HttpWebPictures.kt               WebPictures<Uri> on HttpURLConnection: a listing's text, a picture into a file, on outside threads
+    │   │   ├── slideshow/
+    │   │   │   └── PreferencesSlideshowLibrary.kt   SlideshowLibrary on SharedPreferences: each source's slides, the one shown, when fetched
     │   │   ├── outside/                             asking another app, which may never answer (below)
     │   │   │   ├── OutsideCalls.kt                  the calls that can't be stopped, each on a short-lived thread, at most 10 alive; the clock and the wait for data
     │   │   │   ├── OutsideReader.kt                 asks and reads a Uri another app answers for, giving up when stopped or after 15 s without an answer
@@ -125,6 +129,28 @@ through `outside/`, and its job never waits on that app for good
   wait and its clock stands still, and the time another app takes passes when the test says. In
   the tests, `AnotherApp` is another app's provider; it serves files, as Robolectric's pipes are
   files too, which a reader that catches up finds ended.
+
+## The slideshow's downloads (this fork)
+
+`HttpWebPictures` asks the slideshow's sites (`WebSources`, in `:domain`) for their listings and
+pictures, over `https` only, with `HttpURLConnection` and no library; every request names the
+fork in its `User-Agent`, as Wikimedia asks. A server may never answer, so each call runs on a
+thread of its own from `OutsideCalls.start`, never on the jobs' thread
+([above](#another-apps-answers)): nothing waits for that thread, which ends by itself, as
+connecting and each read give up after 15 s, and it stops reading once its call is cancelled; it
+counts towards `OutsideCalls.MOST`. A listing is read up to 2 MB; a picture up to 8 MB, into a file
+of `cacheDir/slideshow/` named as the library will name it. Then a job (`JobPriority.SLIDESHOW`,
+the last) checks it's wide and large enough (`fitsTheSlideshow`), or draws the Earth's 2048 px
+globe, decoded at half its size, on a black 1920 × 1080 picture (JPEG, quality 90). The library
+adds it as a drop folder's file (`FilesPictures`' `downloads`, the one folder of Luncher's own it
+takes a `file://` from), with its limits, its hash and its working copy, and the file is deleted
+then, or when its call is cancelled, and before the first download of each process. A download
+cut short (a server that ends its answer early without an error) is refused as any picture cut
+short: the library checks every file is whole before decoding it ([below](#pictures)), and its
+`NotAPicture` makes the slideshow pass that picture by. The Earth, drawn anew as a whole JPEG
+before the library sees it, is checked first, in the job, and is unfit if it's not whole. Which
+pictures each source gave is `PreferencesSlideshowLibrary`'s, in the `slideshow` preferences.
+The tests read `file://` URLs of their own files: no test uses the network.
 
 ## Pictures
 
@@ -234,4 +260,5 @@ it can read, so there a picture comes in through a share.
 
 | Element | Reason (don't remove without replacing it) |
 |---|---|
+| `INTERNET` (this fork's `slideshow` branch only) | `HttpWebPictures` downloads the slideshow's listings and pictures, only while the home screen shows and a site is the background's source. Upstream Luncher is offline by design and never asks for it. No `ACCESS_NETWORK_STATE`: being offline is a fetch that fails. |
 | `<queries>` for `MAIN`+`LEANBACK_LAUNCHER` | Package visibility (targetSdk 30+): without it `PackageManagerInstalledApps` can't see other apps. Only TV apps: Luncher lists and draws nothing else, and starting an app needs no visibility, so a query for phone apps (`MAIN`+`LAUNCHER`) would only widen what it can see. |

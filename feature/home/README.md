@@ -230,6 +230,21 @@ A picture that's gone (deleted in the background editor, which sets the wallpape
 file lost) is no wallpaper, and without one, none is kept: asked for none, `Wallpaper` deletes the
 kept file. The wallpaper takes about 8 MB of memory at 1080p while shown.
 
+**This fork's slideshow.** With a site as the background's source, the wallpaper is the slide
+`Slides` (`Slideshow`, in `:domain`'s `slideshow/`) says, in place of the background's picture,
+which shows until the site's first pictures are fetched. `HomeWallpaper` watches it from `onStart`
+to `onStop`, and only then does the slideshow follow the clock's minutes, change slides at the
+background's interval, and fetch pictures when they're over 12 hours old: nothing runs while the
+home screen is hidden. A slide is drawn as any wallpaper, from its original, and kept in the same
+one file, so a start shows the slide it left; but it comes in silently: `Wallpaper` stays on the
+slide before (or none) while it's drawn, never `Drawing`, so no window shows, and `HomeWallpaper`
+fades it in over the one before in 400 ms (`TransitionDrawable`), both images drawn only during the
+fade, about 8 MB more at 1080p for that moment; then the one before is let go. Writing the kept
+file at each slide (a few MB, every 5 to 60 minutes) is the price of a start that shows the slide
+at once. The editors' previews draw the background's own picture, not the slide: `readyFor` gives
+them the image shown only when it was drawn from that picture and style, judged by what it was
+drawn from, so while a slide comes in silently it still answers for the image before.
+
 | Part | Job |
 |---|---|
 | `Background` (`:domain`) | the picture, or none, and how it's drawn: fit, position, dim, blur |
@@ -237,7 +252,8 @@ kept file. The wallpaper takes about 8 MB of memory at 1080p while shown.
 | `Wallpaper` (`:domain`) | the wallpaper as it stands, one per process, made by `AppGraph`: reads the one kept, draws it again when it won't do, saves a new background (drawn, then stored), forgets a deleted picture |
 | `StoredWallpaper` (`:domain`) / `FileStoredWallpaper` (`:platform`) | the one wallpaper kept, a file replaced in one step |
 | `PictureImages` (`:domain`) / `FilePictureImages` (`:platform`) | draws the picture at the screen's size, keeping nothing |
-| `HomeWallpaper` | the window's background as `Wallpaper` says, and its window while it's drawn |
+| `HomeWallpaper` | the window's background as `Wallpaper` says, and its window while it's drawn; a new slide faded in over the one before |
+| `Slides`, `Slideshow` (`:domain`) | this fork's slideshow: the slide shown, changed at the background's interval, its pictures fetched, while watched |
 | `WorkingDialog` (`:ui`) | that window: a spinning wheel and why, taking every key, half a second at least |
 
 ### Focus

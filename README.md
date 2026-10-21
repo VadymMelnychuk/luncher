@@ -13,6 +13,17 @@
 
 It's made with performance in mind, to run smoothly even on old and weak Android TV devices, and still gives you plenty of customization options to shape it to your taste.
 
+> **This fork's `slideshow` branch** ([VadymMelnychuk/luncher](https://github.com/VadymMelnychuk/luncher),
+> never meant for upstream) adds an optional wallpaper slideshow from the internet: in the
+> background editor, **Source** picks Bing, NASA Earth (EPIC), Wikimedia's picture of the day, NASA
+> APOD or, built with a key, TMDB's trending films, and **Change every** how long each picture
+> shows (5 to 60 minutes, 30 by default). While the home screen shows, it fetches up to 8 pictures
+> twice a day and fades from one to the next; offline, it goes on with those it has, or shows the
+> picture chosen. For that the app asks for the `INTERNET` permission, which upstream Luncher never
+> does ("Offline by design", below). Source = Picture is upstream's behavior, with nothing fetched.
+> TMDB's key goes in `local.properties` as `tmdb.apiKey=…` (git-ignored); without one, TMDB isn't
+> offered.
+
 ## Screenshots
 
 | | |

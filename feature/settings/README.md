@@ -29,6 +29,7 @@ feature/settings/
     │   │   ├── AppearanceEditorLayout.kt the editor's columns: the options level with the title
     │   │   ├── OptionRow.kt      an option's row: both editors'; Left and Right step it, or OK opens its list
     │   │   ├── OptionList.kt     an option's values in a list over its row: the background editor's
+    │   │   ├── ChoiceRow.kt      a row of the background editor for a value that isn't an option: the slideshow's source and interval
     │   │   ├── OptionLabels.kt   what the options, their values and groups are called
     │   │   ├── BackgroundActivity.kt the background editor: the pictures, the draft, Save; renames and deletes pictures, prepares them
     │   │   ├── BackgroundStartColumn.kt  its preview, options, Save and Delete all, the preview as large as the room left
@@ -239,6 +240,24 @@ the focus stays on what had it, unless that's a picture that's gone: then it goe
 took its place, or the one before it. Whether what had the focus is still there is told by its
 parents, not by whether it shows: Android shows the editor's window again only after `onStart`,
 where the editor reads the library again, so until then none of its views counts as shown.
+
+**This fork's slideshow.** Above the pictures, two rows listed as the options are (`ChoiceRow`,
+OK opening an `OptionList`): Source, Picture (the picture chosen below, as without a slideshow)
+or a site the wallpaper's pictures come from (`SettingsGraph.slideshowSources`: TMDB only in a
+build with its key), TMDB's notice below it while TMDB is chosen, as its terms ask; and Change
+every, 5, 15, 30 or 60 minutes, dimmed while Source is Picture. They're part of the draft, stored
+on Save with the rest of the background. With a site, Dim and Blur apply without a picture too:
+they draw its pictures. The preview shows the picture chosen; a site's pictures join the library
+as they're fetched, named after the site, their date and title, so one can also be chosen as the
+picture; listed by name with the others, each site's come together, the oldest first. Choosing a
+picture, another one or the stored one again, keeps Source and Change every as the draft has them
+(`Background.choosing`): a picture starts as it is in its position, dim and blur only. They're
+above the pictures, not with the options, so the start column, and its preview, keep their
+height; and outside the pictures' `ListFrame`, so Down from Change every goes on to No picture,
+and Up from it comes back. Coming back to the editor, the focus on either row stays there, as on
+an option. Reset to defaults in the appearance editor stops the slideshow too: Source goes back
+to Picture and Change every to 30 minutes, and its question says so, the pictures fetched staying
+in the library.
 
 What the user changes is a draft, the one exception to the appearance editor's rule of storing each
 change at once ([`ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#appearance)): OK on a picture
