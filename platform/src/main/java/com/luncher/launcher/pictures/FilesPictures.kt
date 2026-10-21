@@ -51,7 +51,8 @@ import com.luncher.launcher.ui.R as UiR
  * once per process, deleting what no index entry names (files a killed process left). A source
  * other apps give is read as a stream, through [ContentResolver], never by a path it names: a
  * `file://` Uri is [ImportResult.Unreadable] (only an app with storage permission could read
- * it), except one of Luncher's own drop folders ([dropFolders]). It's asked and read through
+ * it), except one of Luncher's own drop folders ([dropFolders]), or of its [downloads] (the
+ * slideshow's pictures, downloaded into its private files). It's asked and read through
  * [OutsideReader], as the app may never answer: the job then gives up, after
  * [OutsideReader.LIMIT_MS] without an answer ([ImportResult.Unreadable]), or once the import is
  * cancelled. A folder shared with the pictures, whose reading fails as a folder's, is
@@ -75,6 +76,7 @@ class FilesPictures(
     private val images: File = File(context.cacheDir, CachedPictureImages.FOLDER),
     private val now: () -> Long = System::currentTimeMillis,
     private val dropFolders: () -> List<File> = { dropFolders(context.applicationContext) },
+    private val downloads: File? = null,
     copies: File = File(context.filesDir, WorkingCopies.FOLDER),
     screen: () -> ScreenSize = { context.applicationContext.screenSize() },
 ) : Pictures, PictureImport<Uri> {
@@ -371,7 +373,7 @@ class FilesPictures(
 
     private fun inDropFolder(file: File): Boolean {
         val path = file.canonicalPath
-        return dropFolders().any { path.startsWith(it.canonicalPath + File.separator) }
+        return (dropFolders() + listOfNotNull(downloads)).any { path.startsWith(it.canonicalPath + File.separator) }
     }
 
     private fun noSpace(e: IOException): Boolean = errno(e) == OsConstants.ENOSPC

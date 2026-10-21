@@ -19,6 +19,8 @@ import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
+import com.luncher.domain.slideshow.SlideshowInterval
+import com.luncher.domain.slideshow.SlideshowSource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,7 +45,7 @@ class PreferencesAppearanceSettingsTest {
         ),
         TileStyle(Corners.Radius(16), FocusStyle.LIFT),
         TopBarAppearance(clockSide = Side.RIGHT, timeSide = Side.RIGHT, showTime = true, showDate = false),
-        Background(PictureId("0123456789abcdef0123456789abcdef"), Fit.STRETCH, PicturePosition.LEFT, 40, Blur.LIGHT),
+        Background(PictureId("0123456789abcdef0123456789abcdef"), Fit.STRETCH, PicturePosition.LEFT, 40, Blur.LIGHT, SlideshowSource.BING, SlideshowInterval.FIFTEEN),
     )
 
     // The stored format, written out: a TV keeps it across updates, so a change of it has to read
@@ -64,6 +66,8 @@ class PreferencesAppearanceSettingsTest {
         "background_dim" to "40",
         "background_blur" to "LIGHT",
         "background_picture" to "0123456789abcdef0123456789abcdef",
+        "background_source" to "BING",
+        "background_interval" to "FIFTEEN",
     )
 
     private fun store(values: Map<String, Any>) {
@@ -137,6 +141,36 @@ class PreferencesAppearanceSettingsTest {
         store(stored.filterKeys { !it.startsWith("background_") })
 
         assertEquals(changed.copy(background = Background()), PreferencesAppearanceSettings(context).read())
+    }
+
+    // The slideshow was added after the background: an older version stored no source, and shows its picture.
+    @Test
+    fun `stored before the slideshow, shows the background's picture, every 30 minutes when one is chosen`() {
+        store(stored - "background_source" - "background_interval")
+
+        val before = changed.copy(background = changed.background.copy(source = SlideshowSource.PICTURE, interval = SlideshowInterval.THIRTY))
+        assertEquals(before, PreferencesAppearanceSettings(context).read())
+    }
+
+    @Test
+    fun `a source or an interval it doesn't know reads as none, or the default, and changes nothing else`() {
+        store(stored + ("background_source" to "FLICKR"))
+        assertEquals(changed.copy(background = changed.background.copy(source = SlideshowSource.PICTURE)), PreferencesAppearanceSettings(context).read())
+
+        preferences.edit().clear().commit()
+        store(stored + ("background_interval" to "TEN"))
+        assertEquals(changed.copy(background = changed.background.copy(interval = SlideshowInterval.THIRTY)), PreferencesAppearanceSettings(context).read())
+    }
+
+    @Test
+    fun `reads back every source and interval`() {
+        for (source in SlideshowSource.entries) {
+            for (interval in SlideshowInterval.entries) {
+                val appearance = changed.copy(background = changed.background.copy(source = source, interval = interval))
+                PreferencesAppearanceSettings(context).write(appearance)
+                assertEquals(appearance, PreferencesAppearanceSettings(context).read())
+            }
+        }
     }
 
     @Test

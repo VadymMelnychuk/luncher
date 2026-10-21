@@ -287,6 +287,29 @@ class FilesPicturesTest {
     }
 
     @Test
+    fun `adds a picture the slideshow downloaded into its own folder, named after its file`() {
+        val downloads = File(context.cacheDir, "slideshow").apply { mkdirs() }
+        library = FilesPictures(context, jobs, outsideCalls, now = { time }, dropFolders = { listOf(dropFolder) }, downloads = downloads, copies = copies, screen = { screen })
+        val downloaded = File(downloads, "Bing 2026-10-21 Bridge").apply { writeBytes(red) }
+
+        val added = add(Uri.fromFile(downloaded)) as ImportResult.Added
+
+        assertEquals("Bing 2026-10-21 Bridge", added.picture.name)
+        assertEquals(ImportResult.Unreadable, add(Uri.fromFile(File(context.cacheDir, "elsewhere.png").apply { writeBytes(blue) })))
+    }
+
+    @Test
+    fun `refuses a download cut short, as any picture cut short`() {
+        val downloads = File(context.cacheDir, "slideshow").apply { mkdirs() }
+        library = FilesPictures(context, jobs, outsideCalls, now = { time }, dropFolders = { listOf(dropFolder) }, downloads = downloads, copies = copies, screen = { screen })
+        val photo = TestPictureFiles.jpeg(TestPictureFiles.stacked(320, 180, Color.RED, Color.BLUE), orientation = 1)
+        val cut = File(downloads, "Bing 2026-10-21 Bridge").apply { writeBytes(photo.copyOf(photo.size * 2 / 3)) }
+
+        assertEquals(ImportResult.NotAPicture, add(Uri.fromFile(cut)))
+        assertEquals(emptyList<Picture>(), library.read())
+    }
+
+    @Test
     fun `says it can't read what no app gives`() {
         assertEquals(ImportResult.Unreadable, add(Uri.parse("content://com.example.gone/1")))
         assertEquals(ImportResult.Unreadable, add(Uri.parse("http://example.com/a.png")))

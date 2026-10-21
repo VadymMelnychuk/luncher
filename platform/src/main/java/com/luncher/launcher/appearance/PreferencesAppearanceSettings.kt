@@ -9,6 +9,8 @@ import com.luncher.domain.appearance.Corners
 import com.luncher.domain.appearance.appearanceOptions
 import com.luncher.domain.appearance.valueOrDefault
 import com.luncher.domain.pictures.PictureId
+import com.luncher.domain.slideshow.SlideshowInterval
+import com.luncher.domain.slideshow.SlideshowSource
 
 /**
  * [AppearanceSettings] in SharedPreferences: one string per option of the catalog, under the key
@@ -16,7 +18,9 @@ import com.luncher.domain.pictures.PictureId
  * too, in dp, or "pill"). A stored value
  * that isn't one of the option's values (an older or newer version's, or of another type) reads
  * as that option's default, and changes nothing else. An option never written has no key. The
- * background's picture, which isn't an option, is its id under [PICTURE], or no key for none.
+ * background's picture, which isn't an option, is its id under [PICTURE], or no key for none; its
+ * slideshow's source and interval, which aren't options either, are their names under [SOURCE]
+ * and [INTERVAL], one not known reading as no slideshow, or the default interval.
  *
  * Read from storage once per process, then kept; a write stores in the background (`apply`) and
  * tells the listeners at once. Every screen gets this one instance from AppGraph, so a write made
@@ -34,7 +38,10 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
         current?.let { return it }
         val stored = preferences.all
         val picture = (stored[PICTURE] as? String)?.let(::PictureId)
-        return appearanceOptions().all.fold(Appearance(background = Background(picture = picture))) { appearance, option -> readInto(appearance, option, stored) }
+        val source = SlideshowSource.entries.firstOrNull { it.name == stored[SOURCE] } ?: SlideshowSource.PICTURE
+        val interval = SlideshowInterval.entries.firstOrNull { it.name == stored[INTERVAL] } ?: Background().interval
+        val background = Background(picture = picture, source = source, interval = interval)
+        return appearanceOptions().all.fold(Appearance(background = background)) { appearance, option -> readInto(appearance, option, stored) }
             .also { current = it }
     }
 
@@ -44,6 +51,8 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
         for (option in appearanceOptions().all) editor.putString(key(option), encode(option.get(appearance)))
         val picture = appearance.background.picture
         if (picture == null) editor.remove(PICTURE) else editor.putString(PICTURE, picture.value)
+        editor.putString(SOURCE, appearance.background.source.name)
+        editor.putString(INTERVAL, appearance.background.interval.name)
         editor.apply()
         listeners.toList().forEach { it() }
     }
@@ -91,5 +100,7 @@ class PreferencesAppearanceSettings(context: Context) : AppearanceSettings {
     private companion object {
         const val FILE = "appearance"
         const val PICTURE = "background_picture"
+        const val SOURCE = "background_source"
+        const val INTERVAL = "background_interval"
     }
 }

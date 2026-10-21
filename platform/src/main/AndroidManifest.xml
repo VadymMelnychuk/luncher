@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- This fork's slideshow only: HttpWebPictures downloads the wallpaper's pictures from the
+         sources the user chooses, while the home screen shows (README.md#manifest). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Package visibility (API 30+): PackageManagerInstalledApps must see the TV apps Luncher lists. -->
     <queries>
         <intent>

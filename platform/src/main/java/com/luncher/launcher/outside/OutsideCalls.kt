@@ -81,6 +81,33 @@ class OutsideCalls(
         }
     }
 
+    /**
+     * Runs [call] on a short-lived thread of its own, which nothing waits for: a call that ends by
+     * itself, within time limits of its own (a download, each of its waits on the server limited),
+     * and hands its result on by itself (to the main thread). What it throws is dropped. False,
+     * and no thread, when [MOST] are alive already, as for [call]'s other form.
+     */
+    internal fun start(call: () -> Unit): Boolean {
+        if (alive.incrementAndGet() > most) {
+            alive.decrementAndGet()
+            return false
+        }
+        try {
+            Thread({
+                Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
+                try {
+                    runCatching(call)
+                } finally {
+                    alive.decrementAndGet()
+                }
+            }, "luncher-outside-${started.incrementAndGet()}").apply { isDaemon = true }.start()
+        } catch (e: Throwable) {
+            alive.decrementAndGet()
+            throw e
+        }
+        return true
+    }
+
     /** One call's answer, handed from its thread to the one waiting, or, once that one has left, to [close]. */
     private class Answer<T>(private val close: (T) -> Unit) {
 
