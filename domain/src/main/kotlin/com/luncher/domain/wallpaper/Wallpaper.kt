@@ -8,6 +8,7 @@ import com.luncher.domain.jobs.LatestRequest
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.withoutPictures
+import com.luncher.domain.slideshow.Slides
 
 /**
  * The home screen's wallpaper as it stands: none, ready to show, or being drawn and why. One per
@@ -26,6 +27,12 @@ import com.luncher.domain.pictures.withoutPictures
  * drawn and kept first, and only then is the background stored, so the setting never names a
  * wallpaper that isn't drawn, and the home screen always has one to show.
  *
+ * A background with a slideshow shows the slide [slides] says in place of its own picture, as long
+ * as there's one. A slide is drawn and kept as any wallpaper, from its original, so a start shows
+ * the one it left; but nobody asked for it, so it comes in silently: what [state] was stays
+ * meanwhile (the slide before, or none), never [State.Drawing], and the slide is [State.Ready] once
+ * it's drawn. One that's gone meanwhile leaves the wallpaper as it was.
+ *
  * [images] draws a picture at any size and keeps nothing: what's kept is [stored]'s. Used on the
  * main thread only; [onMain] runs a job's result there.
  */
@@ -34,6 +41,7 @@ class Wallpaper<Image>(
     private val images: PictureImages<Image>,
     private val settings: AppearanceSettings,
     private val jobs: Jobs,
+    private val slides: Slides? = null,
     onMain: (() -> Unit) -> Unit,
 ) {
 
@@ -52,12 +60,14 @@ class Wallpaper<Image>(
     /**
      * The image [state] shows, if it was drawn from [background]: a preview of the home screen
      * draws it at once, scaled to its size, rather than drawing the picture again. Null while
-     * it's being drawn, and for another background.
+     * it's being drawn, and for another background. Judged by what the image shown was drawn
+     * from, not by what's asked for: while a slide comes in silently, the image is still the one
+     * before.
      */
     fun readyFor(background: Background): Image? {
         val state = state
-        val drawing = shown
-        if (state !is State.Ready || drawing !is WallpaperDrawing) return null
+        val drawing = drawn
+        if (state !is State.Ready || drawing == null) return null
         return if (drawing.picture == background.picture && drawing.style == background.style) state.image else null
     }
 
@@ -66,6 +76,9 @@ class Wallpaper<Image>(
 
     /** What [state] is for: a drawing, or null for none; [Unknown] until the first [show]. */
     private var shown: Any? = Unknown
+
+    /** What the image [state] shows was drawn from, while it's [State.Ready]. */
+    private var drawn: WallpaperDrawing? = null
 
     /** Whether a [save] is drawing: until it's stored, [show] asks for the background it replaces. */
     private var saving = false
@@ -77,33 +90,39 @@ class Wallpaper<Image>(
      */
     fun show(background: Background, width: Int, height: Int) {
         if (saving) return
-        val wanted = wallpaperDrawing(background, width, height)
+        val slide = slides?.slide(background)
+        val wanted = wallpaperDrawing(background.showing(slide), width, height)
         if (wanted == shown) return
         shown = wanted
         drawing.stop()
         if (wanted == null) return clear()
         val kept = kept(wanted)
-        if (kept != null) return set(State.Ready(kept))
+        if (kept != null) return ready(wanted, kept)
+        if (slide != null && state !is State.Drawing) {
+            draw(wanted, keepIfGone = true) { image -> if (image != null) ready(wanted, image) else shown = Unknown }
+            return
+        }
         set(State.Drawing(whyDraw(stored.drawing(), wanted) ?: DrawingCause.OUTDATED))   // or kept, but its pixels can't be read
-        draw(wanted, keepIfGone = false) { image -> set(if (image != null) State.Ready(image) else State.None) }
+        draw(wanted, keepIfGone = false) { image -> if (image != null) ready(wanted, image) else set(State.None) }
     }
 
     /**
-     * Makes [background] the home screen's, on a screen of [width] x [height] px: its picture is
-     * drawn and kept, [state] saying it's being saved, and only then is [background] stored. Without a
-     * picture, it's stored at once, and the one kept is deleted. [done] runs on the main thread
+     * Makes [background] the home screen's, on a screen of [width] x [height] px: its picture (or
+     * the slide it shows, with a slideshow) is drawn and kept, [state] saying it's being saved, and
+     * only then is [background] stored. Without a picture, it's stored at once, and the one kept is
+     * deleted. [done] runs on the main thread
      * once it's stored; if the picture is gone meanwhile, nothing is, and the wallpaper is what the
      * stored background asks for.
      */
     fun save(background: Background, width: Int, height: Int, done: () -> Unit) {
-        val wanted = wallpaperDrawing(background, width, height)
+        val wanted = wallpaperDrawing(background.showing(slides?.slide(background)), width, height)
         drawing.stop()
         saving = false
         shown = wanted
         val kept = wanted?.let(::kept)
         if (wanted == null || kept != null) {
             store(background)
-            if (kept != null) set(State.Ready(kept)) else clear()
+            if (wanted != null && kept != null) ready(wanted, kept) else clear()
             return done()
         }
         saving = true
@@ -112,7 +131,7 @@ class Wallpaper<Image>(
             saving = false
             if (image != null) {
                 store(background)
-                set(State.Ready(image))
+                ready(wanted, image)
             } else {
                 shown = Unknown
                 show(settings.read().background, width, height)
@@ -146,6 +165,9 @@ class Wallpaper<Image>(
         listeners -= listener
     }
 
+    /** This background as it shows [slide] in place of its own picture; as it is without one. */
+    private fun Background.showing(slide: PictureId?): Background = if (slide == null) this else copy(picture = slide)
+
     /** The image kept, if it was drawn from [wanted]. */
     private fun kept(wanted: WallpaperDrawing): Image? =
         if (whyDraw(stored.drawing(), wanted) == null) stored.read(wanted) else null
@@ -173,6 +195,12 @@ class Wallpaper<Image>(
     private fun store(background: Background) {
         val appearance = settings.read()
         if (appearance.background != background) settings.write(appearance.copy(background = background))
+    }
+
+    /** [image], drawn from [drawing], shown. */
+    private fun ready(drawing: WallpaperDrawing, image: Image) {
+        drawn = drawing
+        set(State.Ready(image))
     }
 
     private fun set(state: State<Image>) {

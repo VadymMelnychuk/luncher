@@ -7,6 +7,8 @@ import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.slideshow.FakeSlides
+import com.luncher.domain.slideshow.SlideshowSource
 import com.luncher.domain.wallpaper.Wallpaper.State
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -317,5 +319,106 @@ class WallpaperTest {
         assertEquals(background, settings.appearance.background)
         assertEquals(State.Ready("kept"), wallpaper.state)
         assertEquals(0, jobs.pending)
+    }
+
+    // A slideshow.
+
+    private val slides = FakeSlides()
+    private val bing = background.copy(source = SlideshowSource.BING)
+    private val shows = Wallpaper(stored, images, settings, jobs, slides) { onMain += it }
+
+    /** Every state the slideshow's wallpaper told of, in order. */
+    private val showsTold = mutableListOf<State<String>>().also { told -> shows.addListener { told += shows.state } }
+
+    @Test
+    fun `shows the slide in place of the background's picture, the one kept read at once`() {
+        slides.slides[SlideshowSource.BING] = forest
+        stored.kept = drawing.copy(picture = forest) to "forest kept"
+
+        shows.show(bing, 1920, 1080)
+
+        assertEquals(State.Ready("forest kept"), shows.state)
+        assertEquals(0, jobs.pending)
+    }
+
+    @Test
+    fun `a new slide comes in silently over the one shown, then shows, and is kept`() {
+        stored.kept = drawing to "sunset kept"
+        shows.show(bing, 1920, 1080)
+        assertEquals(State.Ready("sunset kept"), shows.state)
+
+        slides.slides[SlideshowSource.BING] = forest
+        shows.show(bing, 1920, 1080)
+        assertEquals("the one before, while it's drawn", State.Ready("sunset kept"), shows.state)
+        drawInTheBackground()
+
+        assertEquals(State.Ready("forest 1920x1080 dim 20"), shows.state)
+        assertEquals(drawing.copy(picture = forest), stored.kept?.first)
+        assertEquals("never drawing", listOf(State.Ready("sunset kept"), State.Ready("forest 1920x1080 dim 20")), showsTold)
+    }
+
+    @Test
+    fun `the first slide comes in silently over no picture`() {
+        slides.slides[SlideshowSource.BING] = forest
+
+        shows.show(Background(source = SlideshowSource.BING), 1920, 1080)
+        assertEquals(State.None, shows.state)
+        drawInTheBackground()
+
+        assertEquals(State.Ready("forest 1920x1080 dim 0"), shows.state)
+        assertEquals(listOf(State.Ready("forest 1920x1080 dim 0")), showsTold)
+    }
+
+    @Test
+    fun `a slide gone meanwhile leaves the wallpaper as it was, the one kept too`() {
+        stored.kept = drawing to "sunset kept"
+        shows.show(bing, 1920, 1080)
+        slides.slides[SlideshowSource.BING] = forest
+        images.missing += forest
+
+        shows.show(bing, 1920, 1080)
+        drawInTheBackground()
+
+        assertEquals(State.Ready("sunset kept"), shows.state)
+        assertEquals(drawing to "sunset kept", stored.kept)
+    }
+
+    @Test
+    fun `saving a background with a slideshow draws its slide`() {
+        slides.slides[SlideshowSource.BING] = forest
+
+        shows.save(bing, 1920, 1080) {}
+        assertEquals(State.Drawing(DrawingCause.SAVING), shows.state)
+        drawInTheBackground()
+
+        assertEquals(State.Ready("forest 1920x1080 dim 20"), shows.state)
+        assertEquals(bing, settings.appearance.background)
+    }
+
+    @Test
+    fun `gives a preview the image shown while the next slide comes in, then nothing for the background's own picture`() {
+        stored.kept = drawing to "sunset kept"
+        shows.show(bing, 1920, 1080)
+        assertEquals(State.Ready("sunset kept"), shows.state)
+        assertEquals("sunset kept", shows.readyFor(bing))
+
+        slides.slides[SlideshowSource.BING] = forest
+        shows.show(bing, 1920, 1080)
+        assertEquals("still the one shown", "sunset kept", shows.readyFor(bing))
+        assertNull("not the slide being drawn", shows.readyFor(Background(forest, dim = 20)))
+
+        drawInTheBackground()
+        assertNull("a slide isn't the background's picture", shows.readyFor(bing))
+        assertEquals("forest 1920x1080 dim 20", shows.readyFor(Background(forest, dim = 20)))
+    }
+
+    @Test
+    fun `without a slide of its source, the background's own picture shows`() {
+        stored.kept = drawing to "sunset kept"
+        slides.slides[SlideshowSource.NASA_EARTH] = forest
+
+        shows.show(bing, 1920, 1080)
+
+        assertEquals(State.Ready("sunset kept"), shows.state)
     }
 }

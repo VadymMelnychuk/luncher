@@ -7,6 +7,8 @@ import com.luncher.domain.pictures.PictureCut
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.slideshow.SlideshowInterval
+import com.luncher.domain.slideshow.SlideshowSource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -65,5 +67,15 @@ class BackgroundTest {
         val draft = Background(PictureId("beach"), Fit.FILL, PicturePosition.LEFT, 60, Blur.STRONG)
 
         assertEquals(draft, draft.choosing(PictureId("beach"), Background(PictureId("sunset"))))
+    }
+
+    @Test
+    fun `choosing a picture keeps the slideshow chosen, its source and interval`() {
+        val stored = Background(PictureId("sunset"), dim = 20)
+        val draft = Background(PictureId("beach"), dim = 60, source = SlideshowSource.BING, interval = SlideshowInterval.FIVE)
+
+        assertEquals(Background(PictureId("forest"), source = SlideshowSource.BING, interval = SlideshowInterval.FIVE), draft.choosing(PictureId("forest"), stored))
+        assertEquals("the stored picture's options", stored.copy(source = SlideshowSource.BING, interval = SlideshowInterval.FIVE), draft.choosing(PictureId("sunset"), stored))
+        assertEquals("no picture", Background(source = SlideshowSource.BING, interval = SlideshowInterval.FIVE), draft.choosing(null, stored))
     }
 }

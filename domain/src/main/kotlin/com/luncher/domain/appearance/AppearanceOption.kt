@@ -161,22 +161,22 @@ sealed interface AppearanceOption<T> {
         }
     }
 
-    /** How much darker the background's picture is drawn, in percent, while there's one. */
+    /** How much darker the background's picture is drawn, in percent, while there's one, or a slideshow's. */
     data object BackgroundDim : AppearanceOption<Int> {
         override val values: List<Int> = listOf(0, 20, 40, 60)
         override fun get(appearance: Appearance) = appearance.background.dim
         override fun set(appearance: Appearance, value: Int) =
             appearance.copy(background = appearance.background.copy(dim = value))
-        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.background.picture != null
+        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.background.showsPictures
     }
 
-    /** How blurred the background's picture is drawn, while there's one. */
+    /** How blurred the background's picture is drawn, while there's one, or a slideshow's. */
     data object BackgroundBlur : AppearanceOption<Blur> {
         override val values: List<Blur> = Blur.entries
         override fun get(appearance: Appearance) = appearance.background.blur
         override fun set(appearance: Appearance, value: Blur) =
             appearance.copy(background = appearance.background.copy(blur = value))
-        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.background.picture != null
+        override fun appliesTo(appearance: Appearance, context: OptionContext) = appearance.background.showsPictures
     }
 }
 

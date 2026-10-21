@@ -24,21 +24,27 @@ fun interface Cancellable {
 /** The priority of each kind of job, higher first: all of them here, so their order shows at a glance. */
 object JobPriority {
 
+    /** A slideshow's picture made ready to add, once downloaded (the Earth drawn on black): nobody waits for it. Last. */
+    const val SLIDESHOW = 0
+
     /** Writing the tiles' images for the next start: after anything a screen waits for. */
-    const val BANNER_CACHE = 0
+    const val BANNER_CACHE = 1
 
     /** Add from folder's previews of the pictures not selected, drawn ahead in case they're selected next. */
-    const val PICTURE_PREFETCH = 1
+    const val PICTURE_PREFETCH = 2
 
     /** What the pictures' screens load: thumbnails, previews, the drop folders' list, preparing pictures. */
-    const val PICTURE_SCREENS = 2
+    const val PICTURE_SCREENS = 3
 
     /**
      * Adding and deleting pictures, and writing the library's index: one priority, so they run in
      * the order they came, and a picture's file is in place before anything draws it.
      */
-    const val PICTURE_LIBRARY = 3
+    const val PICTURE_LIBRARY = 4
 
-    /** The wallpaper drawn and kept, or deleted: saved, or drawn again, while a screen waits for it. First. */
-    const val WALLPAPER = 4
+    /**
+     * The wallpaper drawn and kept, or deleted: saved, or drawn again, while a screen waits for it;
+     * a slideshow's next picture too, which then shows. First.
+     */
+    const val WALLPAPER = 5
 }
