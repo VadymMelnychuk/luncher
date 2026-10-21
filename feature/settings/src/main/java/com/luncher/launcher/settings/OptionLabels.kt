@@ -13,6 +13,8 @@ import com.luncher.domain.appearance.VerticalAlignment
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
 import com.luncher.domain.pictures.PicturePosition
+import com.luncher.domain.slideshow.SlideshowInterval
+import com.luncher.domain.slideshow.SlideshowSource
 
 // What the appearance's options, their values and groups are called, in the user's language: one
 // exhaustive `when` each, so a new option doesn't compile until it has its labels. The appearance
@@ -128,3 +130,17 @@ private fun order(timeSide: Side): Int = when (timeSide) {
     Side.LEFT -> R.string.settings_appearance_time_first
     Side.RIGHT -> R.string.settings_appearance_date_first
 }
+
+/** What the background's [source] is called: the background editor's Source row. */
+internal fun sourceName(source: SlideshowSource): Int = when (source) {
+    SlideshowSource.PICTURE -> R.string.settings_background_source_picture
+    SlideshowSource.BING -> R.string.settings_background_source_bing
+    SlideshowSource.NASA_EARTH -> R.string.settings_background_source_nasa_earth
+    SlideshowSource.WIKIMEDIA -> R.string.settings_background_source_wikimedia
+    SlideshowSource.NASA_APOD -> R.string.settings_background_source_nasa_apod
+    SlideshowSource.TMDB -> R.string.settings_background_source_tmdb
+}
+
+/** How long a slideshow's [interval] is: "30 minutes", the background editor's Change every row. */
+internal fun Context.intervalName(interval: SlideshowInterval): String =
+    resources.getQuantityString(R.plurals.settings_background_interval_minutes, interval.minutes, interval.minutes)

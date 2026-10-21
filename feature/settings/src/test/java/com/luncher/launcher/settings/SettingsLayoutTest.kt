@@ -17,6 +17,7 @@ import com.luncher.domain.apps.AppArrangement
 import com.luncher.domain.apps.FakeAppArrangements
 import com.luncher.domain.apps.FakeInstalledApps
 import com.luncher.domain.apps.FakeInstalledApps.Companion.app
+import com.luncher.domain.slideshow.SlideshowSource
 import com.luncher.launcher.testing.TV_SCREENS
 import com.luncher.launcher.testing.TV_SCREENS_IN_EVERY_LANGUAGE
 import com.luncher.launcher.testing.TvScreen
@@ -130,6 +131,22 @@ class SettingsLayoutTest(private val screen: TvScreen) {
     // With a picture, the longer of its texts.
     @Test
     fun `the reset question fits`() {
+        val activity = Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
+        val options = activity.findViewById<ViewGroup>(R.id.settings_appearance_options)
+
+        options.getChildAt(options.childCount - 1).performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertDialogFits(screen, activity)
+    }
+
+    // This fork's slideshow: its text, longer still.
+    @Test
+    fun `the reset question with a slideshow fits`() {
+        val application = RuntimeEnvironment.getApplication() as SettingsTestApplication
+        application.graph = object : TestSettingsGraph() {
+            override val appearanceSettings = FakeAppearanceSettings(Appearance(background = Background(SAMPLE_WALLPAPER, source = SlideshowSource.BING)))
+        }
         val activity = Robolectric.buildActivity(AppearanceActivity::class.java).setup().get()
         val options = activity.findViewById<ViewGroup>(R.id.settings_appearance_options)
 

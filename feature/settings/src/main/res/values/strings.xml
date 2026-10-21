@@ -114,6 +114,9 @@
     <string name="settings_appearance_reset_question">Reset the appearance to defaults?</string>
     <string name="settings_appearance_reset_text">Every option goes back to its default.</string>
     <string name="settings_appearance_reset_text_background">Every option goes back to its default: the home screen will have no picture. The picture stays in Luncher\'s pictures.</string>
+    <!-- This fork's slideshow: the same when the background has a slideshow, which stops; the
+         pictures it fetched stay. -->
+    <string name="settings_appearance_reset_text_slideshow">Every option goes back to its default: the slideshow stops, and the home screen will have no picture. Its pictures stay in Luncher\'s pictures.</string>
     <string name="settings_appearance_reset_confirm">Reset</string>
     <!-- The entry that opens the device's own settings. -->
     <string name="settings_system">System settings</string>
@@ -123,6 +126,25 @@
     <!-- The background editor (its title is settings_appearance_background): at the top of its
          pictures, how to rename or delete one; OK is the remote's button. -->
     <string name="settings_background_hint">Hold OK on a picture to rename or delete it</string>
+    <!-- This fork's slideshow, in the background editor. An option-like row, above the picture's
+         options: where the home screen's pictures come from. Its values: Picture (the picture
+         chosen at the end, as without a slideshow), then sites on the internet, each a name. -->
+    <string name="settings_background_source">Source</string>
+    <string name="settings_background_source_picture">Picture</string>
+    <string name="settings_background_source_bing" translatable="false">Bing</string>
+    <!-- NASA's camera that shows the whole Earth from space. -->
+    <string name="settings_background_source_nasa_earth">NASA Earth</string>
+    <string name="settings_background_source_wikimedia" translatable="false">Wikimedia</string>
+    <string name="settings_background_source_nasa_apod" translatable="false">NASA APOD</string>
+    <string name="settings_background_source_tmdb" translatable="false">TMDB</string>
+    <!-- Below it while TMDB is chosen: the notice TMDB's terms ask for, in their words. -->
+    <string name="settings_background_tmdb_notice">This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
+    <!-- The next row, while a site is chosen: how long each picture shows, in minutes. -->
+    <string name="settings_background_interval">Change every</string>
+    <plurals name="settings_background_interval_minutes">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> minute</item>
+        <item quantity="other"><xliff:g id="count" example="30">%d</xliff:g> minutes</item>
+    </plurals>
     <!-- Its last entry: stores the picture and options chosen, which the editor only shows until then. -->
     <string name="settings_background_save">Save</string>
     <!-- Beside Save, in red: deletes every picture of the library, after a question. -->

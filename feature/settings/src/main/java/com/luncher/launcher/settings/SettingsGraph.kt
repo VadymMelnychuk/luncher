@@ -13,6 +13,7 @@ import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
 import com.luncher.domain.pictures.ReceivedPictures
+import com.luncher.domain.slideshow.SlideshowSource
 import com.luncher.domain.wallpaper.Wallpaper
 
 /**
@@ -52,6 +53,9 @@ interface SettingsGraph {
 
     /** The home screen's wallpaper, which the background editor saves through (drawn, then stored), and the previews draw when it's of their background. */
     val wallpaper: Wallpaper<Bitmap>
+
+    /** The background editor's sources, in order: the background's picture, then the sites a slideshow can fetch from. */
+    val slideshowSources: List<SlideshowSource>
 
     /** Implemented by the Application, which holds the process's graph. */
     interface Owner {

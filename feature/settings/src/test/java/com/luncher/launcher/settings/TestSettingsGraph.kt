@@ -26,6 +26,8 @@ import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
 import com.luncher.domain.pictures.ReceivedPictures
+import com.luncher.domain.slideshow.SlideshowSource
+import com.luncher.domain.slideshow.WebSources
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.Wallpaper
 
@@ -58,6 +60,9 @@ open class TestSettingsGraph(
 
     // Made on first use, from what a test's subclass gives.
     override val wallpaper by lazy { Wallpaper(storedWallpaper, pictureImages, appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) } }
+
+    /** The sources of a build without TMDB's key; a test gives it with one. */
+    override val slideshowSources: List<SlideshowSource> = WebSources().offered
 }
 
 /**

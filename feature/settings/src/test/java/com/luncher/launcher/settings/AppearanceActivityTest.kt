@@ -20,6 +20,8 @@ import com.luncher.domain.appearance.Background
 import com.luncher.domain.appearance.SAMPLE_WALLPAPER
 import com.luncher.domain.pictures.Blur
 import com.luncher.domain.pictures.Fit
+import com.luncher.domain.slideshow.SlideshowInterval
+import com.luncher.domain.slideshow.SlideshowSource
 import com.luncher.launcher.testing.TV_1080P
 import com.luncher.launcher.testing.bounds
 import org.junit.Assert.assertEquals
@@ -384,6 +386,22 @@ class AppearanceActivityTest {
         answer("Reset")
 
         assertEquals(Appearance(), settings.appearance)
+    }
+
+    @Test
+    fun `the reset question says the slideshow stops, and Reset leaves the picture as its source`() {
+        settings.appearance = Appearance(background = Background(source = SlideshowSource.BING, interval = SlideshowInterval.FIVE))
+        val activity = start()
+
+        activity.reset()
+        assertEquals(
+            "Every option goes back to its default: the slideshow stops, and the home screen will have no picture. Its pictures stay in Luncher's pictures.",
+            question()!!.second,
+        )
+        answer("Reset")
+
+        assertEquals(Appearance(), settings.appearance)
+        assertEquals(SlideshowSource.PICTURE, settings.appearance.background.source)
     }
 
     @Test

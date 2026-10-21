@@ -7,6 +7,7 @@ import com.luncher.domain.apps.AppArrangements
 import com.luncher.domain.apps.AppImages
 import com.luncher.domain.apps.InstalledApps
 import com.luncher.domain.clock.Clock
+import com.luncher.domain.slideshow.Slides
 import com.luncher.domain.wallpaper.Wallpaper
 
 /**
@@ -22,6 +23,9 @@ interface HomeGraph {
 
     /** The wallpaper, kept drawn at the screen's size: one for the process. */
     val wallpaper: Wallpaper<Bitmap>
+
+    /** The wallpaper's slideshow, which the home screen watches while it shows: then only does it change slides and fetch pictures. */
+    val slides: Slides
 
     /** Implemented by the Application, which holds the process's graph. */
     interface Owner {

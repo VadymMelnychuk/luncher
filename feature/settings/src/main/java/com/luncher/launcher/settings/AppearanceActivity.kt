@@ -11,6 +11,7 @@ import com.luncher.domain.appearance.Appearance
 import com.luncher.domain.appearance.AppearanceGroup
 import com.luncher.domain.appearance.OptionContext
 import com.luncher.domain.appearance.appearanceOptions
+import com.luncher.domain.slideshow.SlideshowSource
 
 /**
  * The editor of the home screen's appearance, full-screen: the groups of options of the domain's
@@ -131,11 +132,16 @@ class AppearanceActivity : Activity() {
 
     /**
      * Asks before putting every option back to its default, Cancel focused, saying whether the
-     * home screen loses its picture; nothing to ask while every option is at its default already.
+     * home screen loses its picture, or its slideshow; nothing to ask while every option is at its default already.
      */
     private fun confirmReset() {
         if (appearance == Appearance()) return
-        val text = if (appearance.background.picture != null) R.string.settings_appearance_reset_text_background else R.string.settings_appearance_reset_text
+        val text = when {
+            // This fork's slideshow: it stops too, its pictures kept in the library.
+            appearance.background.source != SlideshowSource.PICTURE -> R.string.settings_appearance_reset_text_slideshow
+            appearance.background.picture != null -> R.string.settings_appearance_reset_text_background
+            else -> R.string.settings_appearance_reset_text
+        }
         dialog?.dismiss()
         dialog = PicturesDialog(
             this,

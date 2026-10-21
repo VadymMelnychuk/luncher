@@ -20,6 +20,9 @@ import com.luncher.domain.pictures.FakePictures
 import com.luncher.domain.pictures.FakePictures.Companion.picture
 import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.PictureFormat
+import com.luncher.domain.slideshow.SlideshowInterval
+import com.luncher.domain.slideshow.SlideshowSource
+import com.luncher.domain.slideshow.WebSources
 import com.luncher.launcher.testing.TV_1080P
 import org.junit.Before
 import org.junit.Test
@@ -86,6 +89,23 @@ class BackgroundScreenshotTest {
     @Test
     fun backgroundEditor() {
         editor(*library).window.decorView.captureRoboImage("src/test/screenshots/settings/settings_background.png")
+    }
+
+    // This fork's slideshow: TMDB chosen as the source, its notice below it, every 15 minutes.
+    @Test
+    fun backgroundEditorSlideshow() {
+        val graph = object : TestPicturesGraph(FakePictures(*library)) {
+            override val slideshowSources = WebSources("key").offered
+        }
+        application.graph = graph
+        graph.appearanceSettings.appearance = Appearance(
+            background = Background(library.first().id, dim = 20, blur = Blur.LIGHT, source = SlideshowSource.TMDB, interval = SlideshowInterval.FIFTEEN),
+        )
+        val activity = Robolectric.buildActivity(BackgroundActivity::class.java).setup().get()
+        idle()
+        graph.jobs.runAll()
+        idle()
+        activity.window.decorView.captureRoboImage("src/test/screenshots/settings/settings_background_slideshow.png")
     }
 
     // No picture yet: how to add one.

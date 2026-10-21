@@ -3,6 +3,7 @@ package com.luncher.launcher.home
 import android.app.Dialog
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.TransitionDrawable
 import android.os.Looper
 import android.widget.TextView
 import com.luncher.domain.appearance.Appearance
@@ -12,6 +13,8 @@ import com.luncher.domain.jobs.ManualJobs
 import com.luncher.domain.pictures.FakePictureImages
 import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.slideshow.FakeSlides
+import com.luncher.domain.slideshow.SlideshowSource
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.testing.TV_1080P
@@ -45,6 +48,7 @@ class HomeWallpaperTest {
     private val images = FakePictureImages(::wallpaper)
     private val stored = FakeStoredWallpaper<android.graphics.Bitmap>()
     private val jobs = ManualJobs()
+    private val slides = FakeSlides()
 
     @Before
     fun useFakes() {
@@ -54,6 +58,7 @@ class HomeWallpaperTest {
             override val pictureImages = this@HomeWallpaperTest.images
             override val storedWallpaper = this@HomeWallpaperTest.stored
             override val jobs = this@HomeWallpaperTest.jobs
+            override val slides = this@HomeWallpaperTest.slides
         }
     }
 
@@ -175,5 +180,59 @@ class HomeWallpaperTest {
         assertTrue(controller.get().background() is BitmapDrawable)
         assertNull(working())
         assertEquals(1, images.rendered.size)
+    }
+
+    // A slideshow.
+
+    private val bridge = PictureId("bridge")
+
+    @Test
+    fun `a new slide fades in over the one before, with no window, and then shows alone`() {
+        stored.kept = drawing to wallpaper(sunset, 1920, 1080, drawing.style)
+        appearance.appearance = Appearance(topLeftTiles, background = Background(picture = sunset, dim = 20, source = SlideshowSource.BING))
+        val activity = start().get()
+        val before = (activity.background() as BitmapDrawable).bitmap
+
+        slides.show(SlideshowSource.BING, bridge)
+        assertSame("the one before, while the next is drawn", before, (activity.background() as BitmapDrawable).bitmap)
+        drawInTheBackground()
+
+        val fade = activity.background() as TransitionDrawable
+        assertSame(before, (fade.getDrawable(0) as BitmapDrawable).bitmap)
+        assertNull(working())
+        assertEquals(listOf(bridge to PictureStyle(dim = 20)), images.rendered)
+
+        after(HomeWallpaper.FADE_MS.toLong())
+
+        val shown = (activity.background() as BitmapDrawable).bitmap
+        assertSame((fade.getDrawable(1) as BitmapDrawable).bitmap, shown)
+        assertEquals(drawing.copy(picture = bridge), stored.kept?.first)
+        assertNull(working())
+    }
+
+    @Test
+    fun `the slideshow is watched only while the home screen shows`() {
+        val controller = start()
+        assertEquals(1, slides.listenerCount)
+
+        controller.pause().stop()
+        assertEquals(0, slides.listenerCount)
+
+        controller.restart()   // Robolectric's restart starts it too, as Android does
+        assertEquals(1, slides.listenerCount)
+    }
+
+    @Test
+    fun `a fade under way when the home screen is left ends with the new slide alone`() {
+        stored.kept = drawing to wallpaper(sunset, 1920, 1080, drawing.style)
+        appearance.appearance = Appearance(topLeftTiles, background = Background(picture = sunset, dim = 20, source = SlideshowSource.BING))
+        val controller = start()
+        slides.show(SlideshowSource.BING, bridge)
+        drawInTheBackground()
+        assertTrue(controller.get().background() is TransitionDrawable)
+
+        controller.pause().stop()
+
+        assertTrue(controller.get().background() is BitmapDrawable)
     }
 }

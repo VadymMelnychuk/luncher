@@ -17,6 +17,10 @@ import com.luncher.domain.pictures.PictureImport
 import com.luncher.domain.pictures.Pictures
 import com.luncher.domain.pictures.PreparedPictures
 import com.luncher.domain.pictures.ReceivedPictures
+import com.luncher.domain.slideshow.Slides
+import com.luncher.domain.slideshow.Slideshow
+import com.luncher.domain.slideshow.SlideshowSource
+import com.luncher.domain.slideshow.WebSources
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.appearance.PreferencesAppearanceSettings
 import com.luncher.launcher.apps.BannerImages
@@ -26,6 +30,7 @@ import com.luncher.launcher.apps.PreferencesAppArrangements
 import com.luncher.launcher.clock.AndroidClock
 import com.luncher.launcher.home.HomeGraph
 import com.luncher.launcher.jobs.BackgroundThreadJobs
+import com.luncher.launcher.network.HttpWebPictures
 import com.luncher.launcher.outside.OutsideCalls
 import com.luncher.launcher.pictures.CachedPictureImages
 import com.luncher.launcher.pictures.FilePictureImages
@@ -33,6 +38,7 @@ import com.luncher.launcher.pictures.FilesPictures
 import com.luncher.launcher.pictures.MediaFolderPictures
 import com.luncher.launcher.pictures.WorkingCopyImages
 import com.luncher.launcher.settings.SettingsGraph
+import com.luncher.launcher.slideshow.PreferencesSlideshowLibrary
 import com.luncher.launcher.wallpaper.FileStoredWallpaper
 
 /**
@@ -68,8 +74,8 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
 
     override val appearanceSettings: AppearanceSettings by lazy { PreferencesAppearanceSettings(appContext) }
 
-    /** The picture library: both ports on the same files and index. */
-    private val library by lazy { FilesPictures(appContext, jobs, outsideCalls) }
+    /** The picture library: both ports on the same files and index; it adds the slideshow's downloads too. */
+    private val library by lazy { FilesPictures(appContext, jobs, outsideCalls, downloads = HttpWebPictures.downloadFolder(appContext)) }
 
     override val pictures: Pictures by lazy { library }
 
@@ -94,6 +100,27 @@ open class AppGraph(context: Context) : HomeGraph, SettingsGraph {
      * not its working copy, as it's stored for good: the thumbnails' cache keeps none of it.
      */
     override val wallpaper: Wallpaper<Bitmap> by lazy {
-        Wallpaper(FileStoredWallpaper(appContext), FilePictureImages(appContext), appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) }
+        Wallpaper(FileStoredWallpaper(appContext), FilePictureImages(appContext), appearanceSettings, jobs, slides) { Handler(Looper.getMainLooper()).post(it) }
+    }
+
+    /** The sites a slideshow fetches from; TMDB only with its key built in (BuildConfig, from local.properties). */
+    private val webSources by lazy { WebSources(BuildConfig.TMDB_API_KEY) }
+
+    override val slideshowSources: List<SlideshowSource> get() = webSources.offered
+
+    /**
+     * The wallpaper's slideshow, one for the process: its pictures downloaded on the outside
+     * calls' threads and added to the picture library, as any picture of the drop folders.
+     */
+    override val slides: Slides by lazy {
+        Slideshow(
+            PreferencesSlideshowLibrary(appContext),
+            HttpWebPictures(appContext, jobs, outsideCalls),
+            pictureImport,
+            pictures,
+            appearanceSettings,
+            clock,
+            webSources,
+        )
     }
 }

@@ -15,35 +15,34 @@ import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.R as UiR
 
 /**
- * An option's values in a list over its [row], opened by OK on the row, the value it has focused
- * and lined up with the row, and its end with the row's; moved up or down only to stay inside the
- * TV's overscan margin: the background editor's way to change
- * an option, where Left and Right on the row must move the focus, to the pictures beside it. The
- * values are those [context] offers; the one the option had is in the accent color. Each value
- * the focus comes to goes to [change] at once, so the preview shows it; OK on one keeps it and
- * closes the list, and Back closes it with the value the option had again, as [change] gets it.
+ * A value's [choices] in a list over its [row], opened by OK on the row, the value it has
+ * ([current]) focused and lined up with the row, and its end with the row's; moved up or down only
+ * to stay inside the TV's overscan margin: the background editor's way to change an option, or
+ * the slideshow's values, where Left and Right on the row must move the focus, to the pictures
+ * beside it. Each choice is the appearance it makes, and what it's called ([labels]); the one it
+ * had is in the accent color. Each choice the focus comes to goes to [change] at once, so the
+ * preview shows it; OK on one keeps it and closes the list, and Back closes it with the appearance
+ * [before] again, as [change] gets it.
  */
 internal class OptionList(
-    option: AppearanceOption<*>,
     row: View,
-    appearance: Appearance,
-    context: OptionContext,
+    choices: List<Appearance>,
+    labels: List<String>,
+    current: Int,
+    private val before: Appearance,
     private val change: (Appearance) -> Unit,
 ) : PopupWindow.OnDismissListener {
 
-    private val before = appearance
     private var kept = false
     private val window: PopupWindow
 
     init {
         val activity = row.context
-        val choices = option.choices(appearance, context)
-        val current = option.indexIn(appearance, context).coerceAtLeast(0)
         val list = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
         val inflater = LayoutInflater.from(activity)
         for ((index, choice) in choices.withIndex()) {
             val entry = inflater.inflate(R.layout.settings_option_list_entry, list, false) as TextView
-            entry.text = activity.optionValue(option, choice)
+            entry.text = labels[index]
             if (index == current) entry.setTextColor(activity.color(UiR.color.accent))
             entry.setOnFocusChangeListener { _, focused -> if (focused) change(choice) }
             entry.setOnClickListener {
@@ -95,6 +94,16 @@ internal class OptionList(
     override fun onDismiss() {
         if (!kept) change(before)
     }
+}
+
+/**
+ * [option]'s values in a list over its [row]: those [context] offers, the one [appearance] has
+ * focused (the first if it isn't among them).
+ */
+internal fun OptionList(option: AppearanceOption<*>, row: View, appearance: Appearance, context: OptionContext, change: (Appearance) -> Unit): OptionList {
+    val choices = option.choices(appearance, context)
+    val labels = choices.map { row.context.optionValue(option, it) }
+    return OptionList(row, choices, labels, option.indexIn(appearance, context).coerceAtLeast(0), appearance, change)
 }
 
 /** [appearance] with each value [context] offers, in order. */

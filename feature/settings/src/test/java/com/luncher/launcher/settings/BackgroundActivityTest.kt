@@ -24,6 +24,9 @@ import com.luncher.domain.pictures.ImportResult
 import com.luncher.domain.pictures.Picture
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.slideshow.SlideshowInterval
+import com.luncher.domain.slideshow.SlideshowSource
+import com.luncher.domain.slideshow.WebSources
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.domain.wallpaper.WallpaperDrawing
 import com.luncher.launcher.testing.TV_1080P
@@ -112,9 +115,13 @@ class BackgroundActivityTest {
 
     private fun Activity.hint() = findViewById<TextView>(R.id.settings_background_hint).text.toString()
 
+    /** The row of the option, or the slideshow's value, called [label]. */
     private fun Activity.option(label: String): View {
-        val options = findViewById<LinearLayout>(R.id.settings_background_options)
-        return (0 until options.childCount).map(options::getChildAt).single { it.findViewById<TextView>(R.id.settings_option_label).text.toString() == label }
+        val rows = listOf(R.id.settings_background_slideshow, R.id.settings_background_options).flatMap { id ->
+            val group = findViewById<LinearLayout>(id)
+            (0 until group.childCount).map(group::getChildAt)
+        }
+        return rows.single { it.findViewById<TextView>(R.id.settings_option_label)?.text?.toString() == label }
     }
 
     private fun Activity.value(label: String) = option(label).findViewById<TextView>(R.id.settings_option_value).text.toString()
@@ -1028,5 +1035,127 @@ class BackgroundActivityTest {
         graph.jobs.runAll()
         idle()
         assertEquals(setOf(beach.id, sunset.id), graph.preparedPictures.prepared.toSet())
+    }
+
+    // This fork's slideshow.
+
+    private fun Activity.tmdbNotice(): TextView? {
+        val group = findViewById<LinearLayout>(R.id.settings_background_slideshow)
+        return (0 until group.childCount).map(group::getChildAt).filterIsInstance<TextView>().singleOrNull()
+    }
+
+    @Test
+    fun `Source offers the picture and the sites, Picture by default, TMDB only with its key`() {
+        graph(sunset)
+        val activity = start().get()
+
+        assertEquals("Picture", activity.value("Source"))
+        assertEquals(listOf("Picture", "Bing", "NASA Earth", "Wikimedia", "NASA APOD"), activity.values("Source"))
+        assertEquals(View.GONE, activity.tmdbNotice()!!.visibility)
+    }
+
+    @Test
+    fun `with TMDB chosen, its notice shows below Source`() {
+        graph = object : TestPicturesGraph(FakePictures(sunset)) {
+            override val slideshowSources = WebSources("key").offered
+        }
+        application.graph = graph
+        val activity = start().get()
+
+        assertEquals(listOf("Picture", "Bing", "NASA Earth", "Wikimedia", "NASA APOD", "TMDB"), activity.values("Source"))
+        val list = activity.open("Source")
+        list.entries().last().requestFocus()
+        list.entries().last().performClick()
+        idle()
+
+        assertEquals("TMDB", activity.value("Source"))
+        assertEquals(View.VISIBLE, activity.tmdbNotice()!!.visibility)
+        assertEquals("This product uses the TMDB API but is not endorsed or certified by TMDB.", activity.tmdbNotice()!!.text.toString())
+    }
+
+    @Test
+    fun `Change every is dimmed and passed by with the picture, and offers 5 to 60 minutes with a site, 30 by default`() {
+        graph(sunset)
+        val activity = start().get()
+        assertFalse(activity.option("Change every").isFocusable)
+
+        activity.step("Source")
+
+        assertEquals("Bing", activity.value("Source"))
+        assertEquals("30 minutes", activity.value("Change every"))
+        assertEquals(listOf("5 minutes", "15 minutes", "30 minutes", "60 minutes"), activity.values("Change every"))
+    }
+
+    @Test
+    fun `with a site and no picture, dim and blur apply to its pictures`() {
+        graph(sunset)
+        val activity = start().get()
+        assertFalse(activity.option("Dim").isFocusable)
+
+        activity.step("Source")
+
+        assertTrue(activity.option("Dim").isFocusable)
+        assertTrue(activity.option("Blur").isFocusable)
+    }
+
+    @Test
+    fun `Save stores the source and the interval with the rest of the background`() {
+        graph(sunset)
+        val activity = start().get()
+        activity.step("Source")
+        activity.step("Change every")
+        assertEquals("stored only on Save", Background(), stored)
+
+        activity.save()
+
+        assertEquals(Background(source = SlideshowSource.BING, interval = SlideshowInterval.SIXTY), stored)
+        assertTrue(activity.isFinishing)
+    }
+
+    @Test
+    fun `choosing a picture keeps the slideshow chosen, the stored one and another alike`() {
+        graph(beach, sunset, background = Background(beach.id, dim = 40))
+        val activity = start().get()
+        activity.step("Source")
+        activity.step("Change every")
+
+        activity.ok("sunset.jpg")
+        assertEquals("Bing", activity.value("Source"))
+        assertEquals("60 minutes", activity.value("Change every"))
+        assertEquals("Off", activity.value("Dim"))
+
+        activity.ok("beach.png")
+        assertEquals(Background(beach.id, dim = 40, source = SlideshowSource.BING, interval = SlideshowInterval.SIXTY), activity.findViewById<AppearancePreviewView>(R.id.settings_background_preview).appearance.background)
+    }
+
+    @Test
+    fun `coming back, the focus stays on Source, and Down from Change every goes on to the pictures`() {
+        graph(beach, sunset)
+        val controller = start()
+        val activity = controller.get()
+        activity.step("Source")
+        assertTrue(activity.option("Source").requestFocus())
+
+        controller.pause().stop()
+        controller.restart().start().resume()
+        idle()
+
+        assertTrue(activity.option("Source").isFocused)
+        assertSame(activity.listRows().first(), activity.option("Change every").focusSearch(View.FOCUS_DOWN))
+    }
+
+    @Test
+    fun `the slideshow's draft stays across a configuration change`() {
+        graph(sunset)
+        val controller = start()
+        controller.get().step("Source")
+        controller.get().step("Source")
+
+        RuntimeEnvironment.setQualifiers("+tvdpi")
+        controller.configurationChange()
+        idle()
+
+        assertEquals("NASA Earth", controller.get().value("Source"))
+        assertEquals(Background(), stored)
     }
 }

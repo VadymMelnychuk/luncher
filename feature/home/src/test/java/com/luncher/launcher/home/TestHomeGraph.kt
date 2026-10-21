@@ -30,6 +30,7 @@ import com.luncher.domain.pictures.PictureId
 import com.luncher.domain.pictures.PictureImages
 import com.luncher.domain.pictures.PicturePosition
 import com.luncher.domain.pictures.PictureStyle
+import com.luncher.domain.slideshow.FakeSlides
 import com.luncher.domain.wallpaper.FakeStoredWallpaper
 import com.luncher.domain.wallpaper.Wallpaper
 import com.luncher.launcher.apps.BannerImages
@@ -66,8 +67,11 @@ open class TestHomeGraph(context: Context) : HomeGraph {
     /** A wallpaper not drawn yet is drawn when a test runs these, and shown when it runs the main looper. */
     open val jobs = ManualJobs()
 
+    /** The slideshow: no slide, unless a test shows one. */
+    override val slides = FakeSlides()
+
     // Made on first use, from what a test's subclass gives.
-    override val wallpaper by lazy { Wallpaper(storedWallpaper, pictureImages, appearanceSettings, jobs) { Handler(Looper.getMainLooper()).post(it) } }
+    override val wallpaper by lazy { Wallpaper(storedWallpaper, pictureImages, appearanceSettings, jobs, slides) { Handler(Looper.getMainLooper()).post(it) } }
 }
 
 /**

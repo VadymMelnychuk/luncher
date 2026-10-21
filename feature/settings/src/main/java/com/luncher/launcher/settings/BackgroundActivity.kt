@@ -31,6 +31,8 @@ import com.luncher.domain.pictures.Renaming
 import com.luncher.domain.pictures.pictureCut
 import com.luncher.domain.pictures.pictureUses
 import com.luncher.domain.pictures.renaming
+import com.luncher.domain.slideshow.SlideshowInterval
+import com.luncher.domain.slideshow.SlideshowSource
 import com.luncher.launcher.ui.WorkingDialog
 import com.luncher.launcher.ui.color
 import com.luncher.launcher.ui.screenSize
@@ -69,6 +71,12 @@ import java.util.Locale
  * Opened with a picture ([EXTRA_PICTURE], from the window after a share), it starts with that one
  * chosen, not saved.
  *
+ * Above the pictures, this fork's slideshow: Source, the background's picture or a site the
+ * pictures come from (TMDB's notice below it while it's chosen), and Change every, how long each
+ * picture shows, while a site is chosen; both listed as the options are, and kept in the draft
+ * with them. The preview shows the picture chosen, which shows on the home screen until the site's
+ * first pictures are fetched; theirs show in the library once they are.
+ *
  * All thumbnails are read at once when it shows, from what the thumbnails' [PictureImages][graph]
  * kept; those not kept are drawn in the background and show as each is done. Pictures that aren't
  * prepared for the screen as it is now ([PreparedPictures][graph]) are prepared first, at its
@@ -102,6 +110,8 @@ class BackgroundActivity : Activity() {
     private lateinit var save: View
     private lateinit var deleteAll: View
     private val options = mutableListOf<OptionRow>()
+    private val choices = mutableListOf<ChoiceRow<*>>()
+    private lateinit var tmdbNotice: TextView
     private var library = PictureLibrary(emptyList(), Locale.getDefault())
 
     /** Each picture's row, kept while it's in the library, so its thumbnail is read or drawn once. */
@@ -151,6 +161,7 @@ class BackgroundActivity : Activity() {
 
         val optionsView = findViewById<LinearLayout>(R.id.settings_background_options)
         val indent = resources.getDimensionPixelSize(R.dimen.settings_entry_padding)
+        addSlideshowRows(findViewById(R.id.settings_background_slideshow), indent)
         for (option in appearanceOptions().groups.single { it.editedApart }.options) {
             val view = layoutInflater.inflate(R.layout.settings_appearance_option, optionsView, false)
             // Not set in from a group, as in the appearance editor: the screen is the group's.
@@ -215,6 +226,7 @@ class BackgroundActivity : Activity() {
     override fun onDestroy() {
         super.onDestroy()
         for (option in options) option.closeList()
+        for (choice in choices) choice.closeList()
         dialog?.dismiss()
         working?.dismiss()
     }
@@ -226,6 +238,8 @@ class BackgroundActivity : Activity() {
         outState.putString(DRAFT_POSITION, draft.position.name)
         outState.putInt(DRAFT_DIM, draft.dim)
         outState.putString(DRAFT_BLUR, draft.blur.name)
+        outState.putString(DRAFT_SOURCE, draft.source.name)
+        outState.putString(DRAFT_INTERVAL, draft.interval.name)
     }
 
     @Deprecated("Deprecated in Java")
@@ -271,8 +285,49 @@ class BackgroundActivity : Activity() {
         return OptionContext(backgroundCut = pictureCut(shown.width, shown.height, screen.width, screen.height))
     }
 
+    /**
+     * The slideshow's rows, at the start of [into]: Source, TMDB's notice below it, and Change
+     * every, set in by [indent] as the options are.
+     */
+    private fun addSlideshowRows(into: LinearLayout, indent: Int) {
+        fun row(): View = layoutInflater.inflate(R.layout.settings_appearance_option, into, false).also { view ->
+            view.setPaddingRelative(indent, view.paddingTop, view.paddingEnd, view.paddingBottom)
+            into.addView(view)
+        }
+        choices += ChoiceRow(
+            row(),
+            R.string.settings_background_source,
+            { graph.slideshowSources },
+            { it.background.source },
+            { appearance, source -> appearance.copy(background = appearance.background.copy(source = source)) },
+            { getString(sourceName(it)) },
+            ::appearance,
+            { changed -> setDraft(changed.background) },
+        )
+        tmdbNotice = TextView(this, null, 0).apply {
+            setTextColor(color(UiR.color.text_secondary))
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.settings_pictures_small_text))
+            setPaddingRelative(indent, 0, resources.getDimensionPixelSize(R.dimen.settings_entry_padding), 0)
+            setText(R.string.settings_background_tmdb_notice)
+        }
+        into.addView(tmdbNotice)
+        choices += ChoiceRow(
+            row(),
+            R.string.settings_background_interval,
+            { SlideshowInterval.entries },
+            { it.background.interval },
+            { appearance, interval -> appearance.copy(background = appearance.background.copy(interval = interval)) },
+            { intervalName(it) },
+            ::appearance,
+            { changed -> setDraft(changed.background) },
+            applies = { it.background.source != SlideshowSource.PICTURE },
+        )
+    }
+
     /** The draft as the options, the preview and the check beside its picture show it. */
     private fun show() {
+        for (choice in choices) choice.show()
+        tmdbNotice.visibility = if (draft.source == SlideshowSource.TMDB) View.VISIBLE else View.GONE
         for (option in options) option.show()
         preview.appearance = appearance()
         markChosen(noneRow, draft.picture == null)
@@ -560,6 +615,8 @@ class BackgroundActivity : Activity() {
                 PicturePosition.valueOf(state.getString(DRAFT_POSITION) ?: return null),
                 state.getInt(DRAFT_DIM),
                 Blur.valueOf(state.getString(DRAFT_BLUR) ?: return null),
+                SlideshowSource.valueOf(state.getString(DRAFT_SOURCE) ?: return null),
+                SlideshowInterval.valueOf(state.getString(DRAFT_INTERVAL) ?: return null),
             )
         } catch (e: IllegalArgumentException) {
             null
@@ -575,6 +632,8 @@ class BackgroundActivity : Activity() {
         private const val DRAFT_POSITION = "draft_position"
         private const val DRAFT_DIM = "draft_dim"
         private const val DRAFT_BLUR = "draft_blur"
+        private const val DRAFT_SOURCE = "draft_source"
+        private const val DRAFT_INTERVAL = "draft_interval"
         private const val DIMMED = 0.4f
 
         /** How a thumbnail shows its picture: filling its frame, its middle. */

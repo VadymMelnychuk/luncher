@@ -169,4 +169,15 @@
         <item quantity="one">Πάρα πολλές εικόνες: έως <xliff:g id="most" example="1">%d</xliff:g> εικόνα μπορεί να προστεθεί τη φορά. Μοιραστείτε λιγότερες και μετά δοκιμάστε ξανά.</item>
         <item quantity="other">Πάρα πολλές εικόνες: έως <xliff:g id="most" example="100">%d</xliff:g> εικόνες μπορούν να προστεθούν τη φορά. Μοιραστείτε λιγότερες και μετά δοκιμάστε ξανά.</item>
     </plurals>
+    <!-- This fork's slideshow, not translated: in English. -->
+    <string name="settings_background_source">Source</string>
+    <string name="settings_background_source_picture">Picture</string>
+    <string name="settings_background_source_nasa_earth">NASA Earth</string>
+    <string name="settings_background_tmdb_notice">This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
+    <string name="settings_appearance_reset_text_slideshow">Every option goes back to its default: the slideshow stops, and the home screen will have no picture. Its pictures stay in Luncher\'s pictures.</string>
+    <string name="settings_background_interval">Change every</string>
+    <plurals name="settings_background_interval_minutes">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> minute</item>
+        <item quantity="other"><xliff:g id="count" example="30">%d</xliff:g> minutes</item>
+    </plurals>
 </resources>

@@ -138,6 +138,12 @@ class BackgroundLayoutTest(private val screen: TvScreen) {
         // Luncher's own names whole: No picture, first, and Add from folder, last.
         val rows = activity.children(R.id.settings_background_list)
         for (row in listOf(rows.first(), rows.last())) assertWhole(screen, row.findViewById(R.id.settings_background_name))
+        // The slideshow's rows, Source and Change every, shown, their names and values whole.
+        for (row in activity.children(R.id.settings_background_slideshow).filter { it.findViewById<View>(R.id.settings_option_label) != null }) {
+            activity.assertShown("a slideshow row", row)
+            assertWhole(screen, row.findViewById(R.id.settings_option_label))
+            assertWhole(screen, row.findViewById(R.id.settings_option_value))
+        }
         // Each option's list whole on the screen, inside the margins across, and each value it
         // offers chosen in turn, in order, the first last again, so the fit is back to filling for
         // the position.

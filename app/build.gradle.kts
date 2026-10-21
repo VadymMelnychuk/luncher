@@ -1,6 +1,8 @@
 // The application: LuncherApplication and AppGraph, which joins the modules; the version, the
 // release build and the instrumented tests (README.md). SDK levels and the settings every Android
 // module shares: build-logic/.
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.luncher.android.application)
 }
@@ -31,6 +33,18 @@ android {
         // Saves the device's state the moment a test fails, while its screen is still open, for
         // CI to upload: once a test has failed, its activity is closed. Reasons: FailureCapture.
         testInstrumentationRunnerArguments["listener"] = "com.luncher.launcher.testing.FailureCapture"
+
+        // This fork's slideshow: TMDB's API key, from `tmdb.apiKey` in local.properties, which git
+        // ignores, so no key is ever committed. Without one (the default), TMDB isn't offered.
+        val tmdbKey = providers.fileContents(rootProject.layout.projectDirectory.file("local.properties")).asText
+            .map { text -> Properties().apply { load(text.reader()) }.getProperty("tmdb.apiKey").orEmpty().trim() }
+            .getOrElse("")
+        if (!Regex("[A-Za-z0-9]*").matches(tmdbKey)) throw GradleException("tmdb.apiKey in local.properties must be letters and digits only")
+        buildConfigField("String", "TMDB_API_KEY", "\"$tmdbKey\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

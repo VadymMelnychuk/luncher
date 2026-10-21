@@ -80,7 +80,7 @@ class HomeActivity : Activity() {
         clockView = findViewById(R.id.home_clock)
         val settingsEntry = findViewById<View>(R.id.home_settings)
         settingsEntry.setOnClickListener { openSettings() }
-        wallpaper = HomeWallpaper(this, graph.wallpaper)
+        wallpaper = HomeWallpaper(this, graph.wallpaper, graph.slides)
         arrange = ArrangeMode(
             tiles,
             normalBar = listOf(clockView, settingsEntry),

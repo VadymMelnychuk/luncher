@@ -113,6 +113,17 @@
             android:textColor="@color/text_secondary"
             android:textSize="@dimen/settings_pictures_small_text" />
 
+        <!-- This fork's slideshow, above the pictures: BackgroundActivity adds its rows, Source,
+             TMDB's notice and Change every. Here, not with the options, so the start column's
+             height, and its preview, are as without it; outside the pictures' ListFrame, so Down
+             from Change every goes on to the pictures. -->
+        <LinearLayout
+            android:id="@+id/settings_background_slideshow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/settings_title_gap"
+            android:orientation="vertical" />
+
         <!-- Down past the last picture stays there, not to Save or Delete all. -->
         <com.luncher.launcher.settings.ListFrame
             android:layout_width="match_parent"

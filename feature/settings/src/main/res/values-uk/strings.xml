@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ukrainian, this fork's slideshow only: the other strings show in English (lint.xml). What each
+     string is for: values/strings.xml. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="settings_background_source">Джерело</string>
+    <string name="settings_background_source_picture">Зображення</string>
+    <string name="settings_background_source_nasa_earth">NASA: Земля</string>
+    <string name="settings_background_tmdb_notice">Цей продукт використовує API TMDB, але не схвалений і не сертифікований TMDB.</string>
+    <string name="settings_appearance_reset_text_slideshow">Усі параметри повернуться до типових: слайдшоу зупиниться, і головний екран залишиться без зображення. Його зображення залишаться серед зображень Luncher.</string>
+    <string name="settings_background_interval">Змінювати кожні</string>
+    <plurals name="settings_background_interval_minutes">
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> хвилину</item>
+        <item quantity="few"><xliff:g id="count" example="2">%d</xliff:g> хвилини</item>
+        <item quantity="many"><xliff:g id="count" example="5">%d</xliff:g> хвилин</item>
+        <item quantity="other"><xliff:g id="count" example="30">%d</xliff:g> хвилини</item>
+    </plurals>
+</resources>

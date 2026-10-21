@@ -229,4 +229,19 @@
         <item quantity="many">صور كثيرة جدًا: يمكن إضافة حتى <xliff:g id="most" example="11">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
         <item quantity="other">صور كثيرة جدًا: يمكن إضافة حتى <xliff:g id="most" example="100">%d</xliff:g> صورة في المرة الواحدة. شارك عددًا أقل، ثم حاول مرة أخرى.</item>
     </plurals>
+    <!-- This fork's slideshow, not translated: in English. -->
+    <string name="settings_background_source">Source</string>
+    <string name="settings_background_source_picture">Picture</string>
+    <string name="settings_background_source_nasa_earth">NASA Earth</string>
+    <string name="settings_background_tmdb_notice">This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
+    <string name="settings_appearance_reset_text_slideshow">Every option goes back to its default: the slideshow stops, and the home screen will have no picture. Its pictures stay in Luncher\'s pictures.</string>
+    <string name="settings_background_interval">Change every</string>
+    <plurals name="settings_background_interval_minutes">
+        <item quantity="zero"><xliff:g id="count" example="0">%d</xliff:g> minutes</item>
+        <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> minute</item>
+        <item quantity="two"><xliff:g id="count" example="2">%d</xliff:g> minutes</item>
+        <item quantity="few"><xliff:g id="count" example="5">%d</xliff:g> minutes</item>
+        <item quantity="many"><xliff:g id="count" example="15">%d</xliff:g> minutes</item>
+        <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> minutes</item>
+    </plurals>
 </resources>
