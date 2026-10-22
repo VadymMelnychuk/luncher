@@ -14,4 +14,5 @@
         <item quantity="many"><xliff:g id="count" example="5">%d</xliff:g> хвилин</item>
         <item quantity="other"><xliff:g id="count" example="30">%d</xliff:g> хвилини</item>
     </plurals>
+    <string name="settings_background_interval_on_return">При кожному поверненні</string>
 </resources>

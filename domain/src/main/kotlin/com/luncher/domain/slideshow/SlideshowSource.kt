@@ -25,8 +25,10 @@ enum class SlideshowSource {
     TMDB,
 }
 
-/** How long each picture of a slideshow shows before the next one. */
+/** How long each picture of a slideshow shows before the next one: minutes, or until the home screen shows again. */
 enum class SlideshowInterval(val minutes: Int) {
+    /** The next picture each time the home screen shows again (back from an app, the TV woken), never while it stays. */
+    ON_RETURN(0),
     FIVE(5),
     FIFTEEN(15),
     THIRTY(30),

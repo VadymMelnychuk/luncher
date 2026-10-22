@@ -244,4 +244,5 @@
         <item quantity="many"><xliff:g id="count" example="15">%d</xliff:g> minutes</item>
         <item quantity="other"><xliff:g id="count" example="100">%d</xliff:g> minutes</item>
     </plurals>
+    <string name="settings_background_interval_on_return">On each return home</string>
 </resources>

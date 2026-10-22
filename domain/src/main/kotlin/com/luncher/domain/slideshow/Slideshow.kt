@@ -20,7 +20,8 @@ import com.luncher.domain.pictures.Pictures
  * nothing, and nothing runs in the background (no service, no alarm).
  *
  * At each minute while it's watched, and when watching starts: once the interval has passed since
- * the slide changed, the next one shows; and once a source's pictures were fetched more than
+ * the slide changed, the next one shows (with [SlideshowInterval.ON_RETURN], each time watching
+ * starts, whatever the minutes); and once a source's pictures were fetched more than
  * [REFRESH] ago, or none of them are in the library, they're fetched again, at most once in
  * [RETRY] for a source: its listing ([WebSources]), then up to [MOST] of its pictures not fetched
  * before, one at a time, each downloaded ([WebPictures]) and added to the picture library
@@ -77,7 +78,7 @@ class Slideshow<Source>(
     /** When the slide last changed, or watching first started; null before. */
     private var changed: Long? = null
 
-    private val tick: () -> Unit = { check() }
+    private val tick: () -> Unit = { check(started = false) }
 
     override fun slide(background: Background): PictureId? {
         if (background.source == SlideshowSource.PICTURE) return null
@@ -91,7 +92,7 @@ class Slideshow<Source>(
         listeners += listener
         if (!first) return
         clock.addListener(tick)
-        check()
+        check(started = true)
     }
 
     override fun removeListener(listener: () -> Unit) {
@@ -100,16 +101,21 @@ class Slideshow<Source>(
         stopFetching()
     }
 
-    /** Shows the next slide if it's time, and fetches if that's due. */
-    private fun check() {
+    /** Shows the next slide if it's time, and fetches if that's due; [started]: watching just started. */
+    private fun check(started: Boolean) {
         val background = settings.read().background
         val source = background.source
         if (fetch?.source != source) stopFetching()
         if (source == SlideshowSource.PICTURE) return
         val now = clock.read().epochMillis
         val last = changed
+        if (background.interval == SlideshowInterval.ON_RETURN) {
+            if (started) {
+                changed = now
+                next(source)
+            }
         // Minutes tick on the minute, so a slide may be due up to a minute after it started.
-        if (last == null || now < last) {
+        } else if (last == null || now < last) {
             changed = now
         } else if (now - last >= background.interval.millis - HALF_A_MINUTE) {
             changed = now

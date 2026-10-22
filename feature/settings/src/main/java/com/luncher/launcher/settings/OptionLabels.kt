@@ -141,6 +141,7 @@ internal fun sourceName(source: SlideshowSource): Int = when (source) {
     SlideshowSource.TMDB -> R.string.settings_background_source_tmdb
 }
 
-/** How long a slideshow's [interval] is: "30 minutes", the background editor's Change every row. */
+/** How long a slideshow's [interval] is: "30 minutes", or "On each return home", the background editor's Change every row. */
 internal fun Context.intervalName(interval: SlideshowInterval): String =
-    resources.getQuantityString(R.plurals.settings_background_interval_minutes, interval.minutes, interval.minutes)
+    if (interval == SlideshowInterval.ON_RETURN) getString(R.string.settings_background_interval_on_return)
+    else resources.getQuantityString(R.plurals.settings_background_interval_minutes, interval.minutes, interval.minutes)

@@ -180,4 +180,5 @@
         <item quantity="one"><xliff:g id="count" example="1">%d</xliff:g> minute</item>
         <item quantity="other"><xliff:g id="count" example="30">%d</xliff:g> minutes</item>
     </plurals>
+    <string name="settings_background_interval_on_return">On each return home</string>
 </resources>

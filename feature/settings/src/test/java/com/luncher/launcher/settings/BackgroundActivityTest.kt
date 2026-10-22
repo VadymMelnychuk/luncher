@@ -1074,7 +1074,7 @@ class BackgroundActivityTest {
     }
 
     @Test
-    fun `Change every is dimmed and passed by with the picture, and offers 5 to 60 minutes with a site, 30 by default`() {
+    fun `Change every is dimmed and passed by with the picture, and offers each return home or 5 to 60 minutes with a site, 30 by default`() {
         graph(sunset)
         val activity = start().get()
         assertFalse(activity.option("Change every").isFocusable)
@@ -1083,7 +1083,7 @@ class BackgroundActivityTest {
 
         assertEquals("Bing", activity.value("Source"))
         assertEquals("30 minutes", activity.value("Change every"))
-        assertEquals(listOf("5 minutes", "15 minutes", "30 minutes", "60 minutes"), activity.values("Change every"))
+        assertEquals(listOf("On each return home", "5 minutes", "15 minutes", "30 minutes", "60 minutes"), activity.values("Change every"))
     }
 
     @Test

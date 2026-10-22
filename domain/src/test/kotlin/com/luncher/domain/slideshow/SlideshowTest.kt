@@ -136,6 +136,40 @@ class SlideshowTest {
     }
 
     @Test
+    fun `on each return, the next slide shows each time watching starts, around, never as the minutes pass`() {
+        settings.appearance = Appearance(background = bing.copy(interval = SlideshowInterval.ON_RETURN))
+        slideshow.addListener(listener)
+        fetch(21, 20, 19)
+        told = 0
+
+        minutesLater(120)
+        assertEquals("stays while watched", id(21), shown())
+
+        slideshow.removeListener(listener)
+        slideshow.addListener(listener)
+        assertEquals(id(20), shown())
+        slideshow.removeListener(listener)
+        minutesLater(1)
+        slideshow.addListener(listener)
+        assertEquals(id(19), shown())
+        slideshow.removeListener(listener)
+        slideshow.addListener(listener)
+        assertEquals(id(21), shown())
+        assertEquals(3, told)
+    }
+
+    @Test
+    fun `on each return, a second listener isn't a return`() {
+        settings.appearance = Appearance(background = bing.copy(interval = SlideshowInterval.ON_RETURN))
+        slideshow.addListener(listener)
+        fetch(21, 20)
+
+        slideshow.addListener {}
+
+        assertEquals(id(21), shown())
+    }
+
+    @Test
     fun `offline, shows the background's own picture, and tries again an hour later`() {
         slideshow.addListener(listener)
         web.answerRead(null)
